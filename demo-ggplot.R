@@ -42,7 +42,7 @@ ggplot(tg,aes(x=dose, y=length, colour=supp)) +
 # Erstellen Sie  den selben Linien-Plot, der die Verabreichungsmethode über unterschiedliche
 # Linientypen darstellt (linetype) anstatt über Farben
 # Zeichnen Sie zusätzlich zu den Linien alle Messpunkte in die Grafik ein
-ggplot(tg,aes(x=dose, y=length, linetype=supp)) + 
+ggplot(tg,aes(x=dose, y=length, linetype=supp, colour = supp)) + 
   geom_line() + 
   geom_point()
 
