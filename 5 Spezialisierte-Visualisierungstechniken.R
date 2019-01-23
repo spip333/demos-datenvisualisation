@@ -20,7 +20,7 @@ help(mtcars)
 
 # Eine Korrleationsmatrize gibt alle paarweise möglichen Korrelation wieder
 # Packen Sie den ganzen Datensatz in die Funktion cor(). Erkennen Sie Korrelationsstrukturen?
-
+cor(mtcars)
 
 # Es ist schwierig zu erkennen, wo die Musik spielt
 # Ein Korrelations-Plot kann Abhilfe schaffen 
@@ -29,11 +29,16 @@ help(mtcars)
 library(corrplot)
 
 
+mcor<-cor(mtcars)
+corrplot(mcor)
+
 # corrplot verfügt über verschiedene nützliche Optionen. 
 help(corrplot)
 # Ergänzen Sie die corrplot mit der Option addCoef.col = "black"
+corrplot(mcor, addCoef.col = "black")
 
 # Mit "number.cex" justiert die Textgrösse 
+corrplot(mcor, addCoef.col = "black", number.cex=.5)
 
 
 ##################
@@ -58,8 +63,9 @@ c2009<-countries %>%
 # Die Funktion ggpairs() ist ausgezeichnet für Scatterplot-Matrizen
 # Erstellen Sie eine Scatterplot/Korrelations-Matrix aller Variablen des reduzierten 
 # Datensatzes c2009 (Achtung: schliessen Sie die Variable "Name" aus (c2009[,2:5]))
-ggpairs()
-
+ggpairs(c2009[,2:5], 
+        diag = list(continuous="barDiag"),
+        lower = list(continuous="smooth"))
 # Der Plot unterscheidet drei Bereiche: Die Diagonale (diag), den Bereich oberhalb der 
 # Diagonale (upper) und den Bereich unterhalb der Diagonale (lower)
 # Varieren Sie die Standardeinstellung wie folgt:
@@ -73,6 +79,14 @@ ggpairs(c2009[,2:5],
 # ist der Zusammenhang überall linear?
 
 
+M1<-lm(data=c2009, infmortality~GDP+laborrate+healthexp)
+summary(M1)
+
+c2009$GDP2<-c2009$GDP^2
+c2009$healthexp2<-c2009$healthexp^2
+
+M2<-lm(data=c2009, infmortality~GDP+GDP2+laborrate+healthexp+healthexp2)
+summary(M2)
 
 
 
@@ -93,18 +107,113 @@ ggplot(mpg, aes(x=displ, y=hwy))+
 
 # Nutzen Sie die Facets-Funktion indem Sie obige Scatterplots unterschieden nach Antriebssystem darstellen (drv) 
 # Stellen die Subplots vertikal dar (+facet_grid(var~.))
+# Daten mpg - Fuel economy data from 1999 and 2008 for 38 popular models of car
+help(mpg)
+
+
+# Ausgangsplot: ein Scatterplot mit Hubraum (displ) und Benzinverbrauch (hwy)
+ggplot(mpg, aes(x=displ, y=hwy))+
+  geom_point()
+
+# Nutzen Sie die Facets-Funktion indem Sie obige Scatterplots unterschieden nach Antriebssystem darstellen (drv) 
+
+# Stellen die Subplots vertikal dar (+facet_grid(var~.))
+ggplot(mpg, aes(x=displ, y=hwy))+
+  geom_point()+
+  facet_grid(drv ~.)
 
 # Stellen Sie die Subplots mit horizontaler Anordnung dar (+facet_grid(.~var))
+ggplot(mpg, aes(x=displ, y=hwy))+
+  geom_point()+
+  facet_grid(.~drv)
 
 
 ### Nehmen Sie einen zweifache Facet-Splits vor (Zylinderzahl (cyl) ~ Antriebssystem (drv))
+ggplot(mpg, aes(x=displ, y=hwy))+
+  geom_point()+
+  facet_grid(drv~cyl)
+
+
+###############################################
+# Bonus
+# Radar-Charts
+# ermöglichen es Profile zu bilden und so erweitere visuelle Vergleiche anzustellen
 
 
 
+### Damit wir einen Radarcharts bauen können, müssen die Daten im long-Format sein
+###
+library(scales)
+library(reshape2)
+library(tibble)
+
+profil_cars <- mtcars %>%
+  rownames_to_column( var = "car" ) %>% # Zeilennamen werden als Variable gespeichert
+  mutate_at(vars(-car),funs(rescale)) %>%  # Reskalieren der Variablen zwecks Vergleichbarkeit
+  melt(id.vars=c("car"), measure.vars=colnames(mtcars)) %>% 
+  arrange(car)
+
+# Schauen Sie sich den neuen Datensatz an, damit sie verstehen, wie er umgeformt ist
+head(profil_cars)
+str(profil_cars)
+
+# Zeichne wir aber zuerst nur ein Profil für den "Ferrari Dino"
+ferrari<-profil_cars %>%
+  filter(car=="Ferrari Dino")
+
+# Zeichnen Sie die Werte für den Ferrari als Linienplot
+# Achtung: es braucht group=1 bei den aesthetics, damit ggplot weiss, dass die Werte zusammengehören
+ggplot(ferrari)+
+  aes(x=variable,y=value,group=1)+
+  geom_line()
+
+
+# Jetzt transformieren wir das xy-Koordinatensystem einfach in ein polares Koordinatensystem
+# coord_polar()
+ggplot(ferrari)+
+  aes(x=variable,y=value,group=1)+
+  geom_line()+
+  coord_polar()
+
+
+# Fast, die Lücke ist unschön
+# wenn wir stattdessen die Linie als Fläche zeichnen (geom_polygon()), sieht es besser aus.
+# Wenn wir die Füllfläche leer lassen fill=NA und nur die Linie einfärben color="black"
+# sieht es aus wie eine Linie
+ggplot(ferrari)+
+  aes(x=variable,y=value,group=1)+
+  geom_polygon(color="black",fill=NA)+
+  coord_polar()
 
 
 
+# Probieren Sie nun die Systemmatik auf den Datensatz mit allen Autos (profil_cars) zu übertragen
+# Damit je Auto ein eigenes Profil gezeichnet wird, bietet sich ein facet_wrap an
+# Hinweis: mit theme(legend.position = "none") entfernen sie die Legende, die hier überflüssig ist
+ggplot(profil_cars)+
+  aes(x=variable, y=value,group=car,color=car) +
+  geom_polygon(fill=NA) + 
+  coord_polar() + facet_wrap(~ car) + 
+  theme(axis.text.x = element_text(size = 5))+
+  theme(legend.position = "none")
 
+# oder nur für die stärksten 25% (hp)
+strongcars <- mtcars %>%
+  rownames_to_column( var = "car" ) %>% # Zeilennamen werden als Variable gespeichert
+  filter(hp>=180) %>% # Filtern beim 3 Quartil
+  mutate_at(vars(-car),funs(rescale)) %>%  # Reskalieren der Variablen zwecks Vergleichbarkeit
+  melt(id.vars=c("car"), measure.vars=colnames(mtcars)) %>% 
+  arrange(car)
 
+ggplot(strongcars)+
+  aes(x=variable, y=value,group=car,color=car) +
+  geom_polygon(fill=NA) + 
+  coord_polar() + facet_wrap(~ car) + 
+  theme(axis.text.x = element_text(size = 10))+
+  theme(legend.position = "none")
+
+##
+# vgl. auch http://www.r-chart.com/2016/10/the-grammar-of-graphics-and-radar-charts.html
+# oder als Alternative: https://www.ggplot2-exts.org/ggradar.html
 
 

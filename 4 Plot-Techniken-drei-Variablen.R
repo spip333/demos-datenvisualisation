@@ -43,11 +43,28 @@ str(UCBAdmissions)
 # mytable <- table(A, B, C) 
 
 # Schauen Sie sich die Daten mit ftable() an
+ftable(UCBAdmissions)
+str(UCBAdmissions)
+UCBAdmissions[2,2,1]
+colnames(UCBAdmissions)
+rownames(UCBAdmissions)
+head(UCBAdmissions[,"Male",])
+head(UCBAdmissions["Admitted","Male",])
+head(UCBAdmissions["Admitted","Female",])
 
+UCBAdmissions[1,1,]
+UCBAdmissions[1,2,]
+
+sum(UCBAdmissions[1,1,])
+sum(UCBAdmissions[1,2,])
+sum(UCBAdmissions[2,1,])
+sum(UCBAdmissions[2,2,])
 
 ## Ein Mosaik-Plot unterteilt die Daten der Reihenfolge der Eingabe nach
-# Erstellen Sie einen Mosaik-Plot (mosaic()), der die Daten zuerst nach Zulassung (Admit) und danach nach Geschlecht (Gender) unterteilt
-mosaic(~Var1+Var2,data=UCBAdmissions)
+# Erstellen Sie einen Mosaik-Plot (mosaic()), der die Daten zuerst 
+# nach Zulassung (Admit) und danach nach Geschlecht (Gender) unterteilt
+mosaic(~Admit+Gender , data=UCBAdmissions)
+
 
 # Was können Sie aus dem Mosaik-Plot in Bezug 
 # auf die Zulassungspraktiken nach Geschlecht ablesen?
@@ -55,7 +72,7 @@ mosaic(~Var1+Var2,data=UCBAdmissions)
 
 # Nun nehmen Sie als dritte Variable die Departemente hinzu +Dept
 ## Was wird ersichtlich, wenn wir die Daten zuerst nach Deptartement splitten?
-mosaic(~Var1+Var2+Var3,data=UCBAdmissions)
+mosaic(~Dept+Gender+Admit,data=UCBAdmissions)
 
 ## Zusätzliche optische Unterstützung gibt es mit den Optionen highlighting und direction
 ## Highlighting hebt Ausprägungen einer Variable farblich hervor
@@ -63,9 +80,9 @@ mosaic(~Var1+Var2+Var3,data=UCBAdmissions)
 ## Heben Sie die Geschlechter farblich hervor mit folgendem Code-Schnippsel
 ## highlighting = "Gender",highlighting_fill=c("lightblue","pink"), direction=c("v","v","h")
 ## Testen Sie die Darstellungsmöglichkeiten indem Sie die Parameter "v" und "h" austauschen.
-mosaic(~Var1+Var2+Var3,data=UCBAdmissions,
-       highlighting = "",highlighting_fill=c("",""),
-       direction=c("","",""))
+mosaic(~Dept+Gender+Admit,data=UCBAdmissions,
+       highlighting = "Gender",highlighting_fill=c("blue","red"),
+       direction=c("v","v","h"))
 
 
 ## Fällt Ihnen etwas auf bezüglich Zulassung nach Geschlecht?
@@ -80,7 +97,7 @@ mosaic(~Var1+Var2+Var3,data=UCBAdmissions,
 
 # Daten: ToothGrowth - The Effect of Vitamin C on Tooth Growth in Guinea Pigs
 help(ToothGrowth)
-
+head(ToothGrowth)
 # Die Studie untersucht den Effekt von Vitamin C auf die Zähne. Dafür wurden unterschiedliche
 # Verabreichungsmethoden getestet (VC=ascorbic acid, OJ=orange juice)
 # Sind die Zähne der Meerschweinchen in Abhängigkeit der Dosis und der Verabreichungsmethode gewachsen?
@@ -89,19 +106,22 @@ help(ToothGrowth)
 # nach Verabreichungsmethode(supp) und Dosis(dise) und speichern diese im Objekt tg
 # ergänzen Sie dafür, untenstehenden code bei group_by()
 tg<-ToothGrowth%>% 
-  group_by(xx,xx) %>% 
+  group_by(supp,dose) %>% 
   summarise(length= mean(len))
 
 
 # Erstellen Sie zur Beantwortung der Untersuchungsfrage
 # einen Linien-Plot mit der Dosis auf der x-Achse (dose) und der Länge der Zähne auf der y-Achse (length)
 # Stellen Sie den Linienverlauf nach Verabreichungsmethode farblich dar (colour=supp)
-ggplot(tg,aes()) +
+ggplot(tg,aes(x = tg$dose, y=tg$length, colour=tg$supp)) +
   geom_line()
 
 
 # Erstellen Sie  den selben Linien-Plot, der die Verabreichungsmethode über unterschiedliche Linientypen darstellt (linetype) anstatt über Farben
 # Zeichnen Sie zusätzlich zu den Linien alle Messpunkte in die Grafik ein
+ggplot(tg,aes(x=dose, y=length,linetype=supp)) +
+  geom_line() +
+  geom_point()
 
 
 ######
@@ -114,6 +134,7 @@ ggplot(tg,aes()) +
 # Daten: cabbage_exp - Data from a cabbage field trial (Summary)
 library(gcookbook)
 help("cabbage_exp")
+head(cabbage_exp)
 
 # Erstellen Sie einen Barplot, der auf der X-Achse die Information zum Datum enthält, 
 # an welchem der Versuchs-Kohl gepflanzt wurde (Date), das mittlere Gewicht auf der y-Achse (Weight) 
@@ -123,10 +144,8 @@ help("cabbage_exp")
 # ist die option stat="identity" nötig. 
 # Achtung 2: Ohne position="dodge" wird ein gestapelter Barplot gezeigt.
 
-ggplot(cabbage_exp, aes())+
-
-
-
+ggplot(cabbage_exp, aes(x=Date, y=Weight, fill=Cultivar))+
+geom_bar(stat="identity", position="dodge")
 
   #########
 # Scatterplots mit 3 Variablen
@@ -136,6 +155,7 @@ ggplot(cabbage_exp, aes())+
 # Nehmen Sie eine erste Dateninspektion vor
 heightweight
 help("heightweight")
+head(heightweight)
 
 # Ausgangspunkt ist der im vorangehenden Skript erstellte Scatterplot, 
 # der Grösse und Alter der Schulkinder plottet
@@ -144,11 +164,15 @@ ggplot(heightweight, aes(x=ageYear,y=heightIn)) +
 
 # Wie sieht der Plot aus, wenn Geschlechterunterschiede (sex) farblich abgebildet werden (colour=)? 
 # Ist der Zusammenhang von Alter und Grösse für Mädchen und Jungs anders?
-
+ggplot(heightweight, aes(x=ageYear,y=heightIn, color=sex)) +
+  geom_point()
 
 # Ergänzen Sie den Plot mit einem stat_smooth(method=loess)
 # Damit werden Linien mit lokaler Anpassung an die Daten angezeigt, 
 # um den Zusammenhang von Alter und Grösse für Mädchen und Jungs unterschieden darzustellen
+
+ggplot(heightweight, aes(x=ageYear,y=heightIn, color=sex)) +
+  geom_point(method=loess)
 
 
 
@@ -177,12 +201,13 @@ countsub<-countsub %>%
 # mit den Gesundheitsausgaben auf der x-Achse, der Kindersterblichkeit 
 # auf der y-Achse und dem Bruttosozialprodukt visualisiert über die Grösse der Punkte
 # über aes(size=)
-ggplot(countsub, aes())+
+ggplot(countsub, aes(x=healthexp, y=infmortality, size=GDP))+
   geom_point()
 
-# Wenn man die Kreise etwas grösser zeichen will, 
+# §Wenn man die Kreise etwas grösser zeichen will, 
 # muss die Skalierung von size angepasst werden (scale_size_area(max_size=))
 
-
-
+ggplot(countsub, aes(x=healthexp, y=infmortality, size=GDP))+
+  geom_point() +
+scale_size_area(max_size=2)
 

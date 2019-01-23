@@ -130,6 +130,7 @@ stat_smooth(method=lm, se=F)
 diamonds
 help(diamonds)
 str(diamonds)
+length(diamonds$carat)
 
 # Nun zeichnen wir einen Scatterplot mit über 54'000 Datenpunkten
 # Plotten Sie das Gewicht der Diamanten (carat) auf der x-Achse und 
